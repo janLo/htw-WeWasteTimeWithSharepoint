@@ -5,12 +5,29 @@
 
 package wewastetimewithsharepoint;
 
+import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 import java.io.FileInputStream;
+import java.io.StringWriter;
 import java.util.Properties;
-import javax.xml.ws.BindingProvider;
-import javax.xml.ws.WebServiceFeature;
-import wewastetimewithsharepoint.wsdl.Lists;
-import wewastetimewithsharepoint.wsdl.ListsSoap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import wewastetimewithsharepoint.wsdl.GetListCollectionResponse.GetListCollectionResult;
+import wewastetimewithsharepoint.wsdl.GetListItemsResponse.GetListItemsResult;
+import wewastetimewithsharepoint.wsdl.GetListResponse.GetListResult;
 
 /**
  *
@@ -19,33 +36,122 @@ import wewastetimewithsharepoint.wsdl.ListsSoap;
 public class TestClass {
 
 
-    public static void main(String[] argv) {
-        Lists service = new Lists();
-        ListsSoap port = service.getListsSoap();
-        
-        
+    public static void main(String[] argv) throws XPathExpressionException {
+                
         Properties p = new Properties();
         try {
-        FileInputStream ins = new FileInputStream("pw.properties");
-        p.load(ins);
+            FileInputStream ins = new FileInputStream("pw.properties");
+            p.load(ins);
         } catch (Exception e) {
-            
         }
-        System.out.println(p.getProperty("user"));
+       
         
-        //((BindingProvider) port).getRequestContext().put(BindingProvider.USERNAME_PROPERTY, p.getProperty("user"));
-        ((BindingProvider) port).getRequestContext().put(BindingProvider.PASSWORD_PROPERTY, p.getProperty("passwd").trim());
-        ((BindingProvider) port).getRequestContext().put(BindingProvider.USERNAME_PROPERTY, "HTWDD\\s64356");
-       // ((BindingProvider) port).getRequestContext().put(BindingProvider.PASSWORD_PROPERTY, "Bla");
+        String passwd = p.getProperty("passwd").trim();
+        String user = "s64356";
 
-        //port.getListItems("HTWDD\\s64356\\test", "", null, null, "3", null, "");
-        ((BindingProvider) port).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "http://ishareproject.informatik.htw-dresden.de:8080/Integration/_vti_bin/lists.asmx");
+        TheUltimativeSharepointBloatConnector con = new TheUltimativeSharepointBloatConnector(user, passwd);
+       
+        //GetListResult r = con.getAStrangeSoapPort().getList("FooBar");
+        GetListItemsResult r = con.getAStrangeSoapPort().getListItems("FooBar", "", null, null, "", null, null);
+        //GetListCollectionResult r = con.getAStrangeSoapPort().getListCollection();
+        Object listResult = r.getContent().get(0);
 
-        System.out.println(
-                ((BindingProvider) port).getRequestContext().get(BindingProvider.ENDPOINT_ADDRESS_PROPERTY)
-                );
+        if ((listResult != null) && (listResult instanceof ElementNSImpl)) {
 
-        port.getListCollection();
+            ElementNSImpl node = (ElementNSImpl) listResult;
+            Document document = node.getOwnerDocument();
 
-       }
+
+           /* XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPath xpath = xpathFactory.newXPath();
+            NodeList fieldNodes = (NodeList) xpath.evaluate("List/Fields/Field", document, XPathConstants.NODESET);
+
+            NodeList fieldNodes = document.getElementsByTagName("Field");
+
+
+            for (int i = 0; i < fieldNodes.getLength(); ++i) {
+                Node element = fieldNodes.item(i);
+                if (checkAttr(element, "Hidden", false, true) && attrExist(element, "ColName")) {
+                    //listsList.add(element.getAttributes().getNamedItem("DisplayName").getNodeValue());
+                    System.out.println(
+                            attrValue(element, "ColName") + " " +
+                            attrValue(element, "DisplayName"));
+                }
+
+            }
+*/
+
+            System.out.println("SharePoint Online Lists Web Service Response:" + TestClass.xmlToString(document));
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private static  boolean checkAttr(Node node, String name, boolean expected, boolean dflt) {
+        if (! attrExist(node, name)) {
+            return dflt;
+        }
+        String search = (expected ? "TRUE" : "FALSE");
+        if (attrValue(node, name).equalsIgnoreCase(search)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static String attrValue(Node node, String name) {
+        if (! attrExist(node, name)) {
+            return null;
+        }
+        return node.getAttributes().getNamedItem(name).getNodeValue();
+    }
+
+    private static boolean attrExist(Node node, String name) {
+        return null != node.getAttributes().getNamedItem(name);
+    }
+
+
+    public static String xmlToString(Document docToString) {
+
+        String returnString = "\n-------------- XML START --------------\n";
+
+        try {
+            //create string from xml tree
+            //Output the XML
+            //set up a transformer
+            TransformerFactory transfac = TransformerFactory.newInstance();
+            Transformer trans;
+            trans = transfac.newTransformer();
+            trans.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            trans.setOutputProperty(OutputKeys.INDENT, "yes");
+            StringWriter sw = new StringWriter();
+            StreamResult streamResult = new StreamResult(sw);
+            DOMSource source = new DOMSource(docToString);
+            trans.transform(source, streamResult);
+            String xmlString = sw.toString();
+            //print the XML
+            returnString = returnString + xmlString;
+        } catch (TransformerException ex) {
+            Logger.getLogger(TestClass.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        returnString = returnString + "-------------- XML END --------------";
+
+        return returnString;
+
+    }
 }
