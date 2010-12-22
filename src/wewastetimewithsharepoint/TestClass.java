@@ -5,12 +5,17 @@
 
 package wewastetimewithsharepoint;
 
+import com.sun.org.apache.xerces.internal.dom.ElementImpl;
 import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 import java.io.FileInputStream;
 import java.io.StringWriter;
+import java.util.LinkedList;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -21,6 +26,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -37,7 +43,7 @@ import wewastetimewithsharepoint.wsdl.GetListResponse.GetListResult;
 public class TestClass {
 
 
-    public static void main(String[] argv) throws XPathExpressionException {
+    public static void main(String[] argv) throws XPathExpressionException, ParserConfigurationException {
                 
         Properties p = new Properties();
         try {
@@ -53,7 +59,31 @@ public class TestClass {
         TheUltimativeSharepointBloatConnector con = new TheUltimativeSharepointBloatConnector(user, passwd);
        
         //GetListResult r = con.getAStrangeSoapPort().getList("FooBar");
-        GetListItemsResult r = con.getAStrangeSoapPort().getListItems("FooBar", "", null, null, "", null, null);
+
+        wewastetimewithsharepoint.wsdl.GetListItems.ViewFields vf =new wewastetimewithsharepoint.wsdl.GetListItems.ViewFields();
+
+        
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance ();
+	DocumentBuilder db = dbf.newDocumentBuilder ();
+	Document doc = db.newDocument ();
+
+        Element root = doc.createElement("ViewFields");
+        doc.appendChild(root);
+        
+        LinkedList<String> fields = new LinkedList<String>();
+        fields.add("ID");
+        fields.add("Title");
+        
+        for (String field : fields) {
+            Element fieldElement = doc.createElement("FieldRef");
+            Attr fieldAttrib = doc.createAttribute("Name");
+            fieldAttrib.setNodeValue(field);
+            root.appendChild(fieldElement);
+        }
+
+        vf.getContent().add(doc.getDocumentElement());
+
+        GetListItemsResult r = con.getAStrangeSoapPort().getListItems("FooBar", "", null, vf, "", null, null);
         //GetListCollectionResult r = con.getAStrangeSoapPort().getListCollection();
         Object listResult = r.getContent().get(0);
 
@@ -77,7 +107,7 @@ public class TestClass {
 
                 for (int j=0; j < attrMap.getLength(); ++j) {
                     Node item = attrMap.item(i);
-                    item.getNodeName()
+                    //item.getNodeName()
                 }
 
                 /*if (checkAttr(element, "Hidden", false, true) && attrExist(element, "ColName")) {

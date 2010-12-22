@@ -11,8 +11,12 @@ import org.jdesktop.application.FrameView;
 import org.jdesktop.application.TaskMonitor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.Vector;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.Timer;
 import javax.swing.Icon;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 
@@ -21,8 +25,12 @@ import javax.swing.JFrame;
  */
 public class WeWasteTimeWithSharepointView extends FrameView {
 
+    private List<String> exposeableLists;
+
     public WeWasteTimeWithSharepointView(SingleFrameApplication app) {
         super(app);
+
+        exposeableLists = TheUltimativeSharepointBloatConnector.instance().getSomeLists();
 
         initComponents();
 
@@ -79,6 +87,8 @@ public class WeWasteTimeWithSharepointView extends FrameView {
                 }
             }
         });
+
+        listSelector.setModel(new DefaultComboBoxModel(exposeableLists.toArray()));
     }
 
     @Action
@@ -107,6 +117,7 @@ public class WeWasteTimeWithSharepointView extends FrameView {
         jScrollPane2 = new javax.swing.JScrollPane();
         listTable = new javax.swing.JTable();
         loadButton = new javax.swing.JButton();
+        loadedLabel = new javax.swing.JLabel();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem exitMenuItem = new javax.swing.JMenuItem();
@@ -125,9 +136,9 @@ public class WeWasteTimeWithSharepointView extends FrameView {
         jLabel1.setText(resourceMap.getString("jLabel1.text")); // NOI18N
         jLabel1.setName("jLabel1"); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-        gridBagConstraints.weightx = 0.7;
         gridBagConstraints.insets = new java.awt.Insets(3, 3, 5, 3);
         mainPanel.add(jLabel1, gridBagConstraints);
 
@@ -142,13 +153,10 @@ public class WeWasteTimeWithSharepointView extends FrameView {
 
         listTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+
             }
         ));
         listTable.setName("listTable"); // NOI18N
@@ -156,7 +164,7 @@ public class WeWasteTimeWithSharepointView extends FrameView {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
@@ -164,9 +172,25 @@ public class WeWasteTimeWithSharepointView extends FrameView {
 
         loadButton.setText(resourceMap.getString("loadButton.text")); // NOI18N
         loadButton.setName("loadButton"); // NOI18N
+        loadButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadButtonActionPerformed(evt);
+            }
+        });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.insets = new java.awt.Insets(3, 3, 5, 3);
         mainPanel.add(loadButton, gridBagConstraints);
+
+        loadedLabel.setFont(resourceMap.getFont("loadedLabel.font")); // NOI18N
+        loadedLabel.setText(resourceMap.getString("loadedLabel.text")); // NOI18N
+        loadedLabel.setName("loadedLabel"); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(3, 3, 5, 3);
+        mainPanel.add(loadedLabel, gridBagConstraints);
 
         menuBar.setName("menuBar"); // NOI18N
 
@@ -231,12 +255,22 @@ public class WeWasteTimeWithSharepointView extends FrameView {
         setStatusBar(statusPanel);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
+        String listName = (String)listSelector.getSelectedItem();
+        SPList list = TheUltimativeSharepointBloatConnector.instance().getList(listName);
+        SharePointListModel lm = new SharePointListModel(list);
+
+        listTable.setModel(lm);
+        loadedLabel.setText(listName + "loaded ...");
+    }//GEN-LAST:event_loadButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JComboBox listSelector;
     private javax.swing.JTable listTable;
     private javax.swing.JButton loadButton;
+    private javax.swing.JLabel loadedLabel;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JProgressBar progressBar;

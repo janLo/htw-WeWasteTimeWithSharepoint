@@ -5,8 +5,6 @@
 
 package wewastetimewithsharepoint;
 
-import java.util.List;
-import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -15,26 +13,27 @@ import javax.swing.table.AbstractTableModel;
  */
 public class SharePointListModel extends AbstractTableModel {
 
-    private final List<String> columnNames;
+    private final SPList list;
 
-    public SharePointListModel(List<String> columnNames) {
-        this.columnNames = columnNames;
+    public SharePointListModel(SPList list) {
+        this.list = list;
     }
 
+    @Override
     public String getColumnName(int column) {
-        return columnNames.get(column);
+        return list.getHeading(column);
     }
 
     public int getRowCount() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return list.getRowCount();
     }
 
     public int getColumnCount() {
-        return columnNames.size();
+        return list.getColumnCount();
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return list.getRowItem(rowIndex).getFieldValue(columnIndex);
     }
 
 }
