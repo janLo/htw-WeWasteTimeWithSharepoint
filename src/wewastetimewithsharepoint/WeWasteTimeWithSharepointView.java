@@ -30,7 +30,7 @@ public class WeWasteTimeWithSharepointView extends FrameView {
     public WeWasteTimeWithSharepointView(SingleFrameApplication app) {
         super(app);
 
-        exposeableLists = TheUltimativeSharepointBloatConnector.instance().getSomeLists();
+        
 
         initComponents();
 
@@ -88,6 +88,7 @@ public class WeWasteTimeWithSharepointView extends FrameView {
             }
         });
 
+        exposeableLists = TheUltimativeSharepointBloatConnector.instance().getSomeLists();
         listSelector.setModel(new DefaultComboBoxModel(exposeableLists.toArray()));
     }
 
@@ -261,7 +262,11 @@ public class WeWasteTimeWithSharepointView extends FrameView {
         SharePointListModel lm = new SharePointListModel(list);
 
         listTable.setModel(lm);
-        loadedLabel.setText(listName + "loaded ...");
+        loadedLabel.setText(listName + " loaded ...");
+
+        exposeableLists = TheUltimativeSharepointBloatConnector.instance().getSomeLists();
+        listSelector.setModel(new DefaultComboBoxModel(exposeableLists.toArray()));
+        listSelector.setSelectedItem(listName);
     }//GEN-LAST:event_loadButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
