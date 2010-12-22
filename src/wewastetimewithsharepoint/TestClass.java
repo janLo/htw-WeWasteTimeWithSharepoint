@@ -23,6 +23,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import wewastetimewithsharepoint.wsdl.GetListCollectionResponse.GetListCollectionResult;
@@ -65,21 +66,29 @@ public class TestClass {
            /* XPathFactory xpathFactory = XPathFactory.newInstance();
             XPath xpath = xpathFactory.newXPath();
             NodeList fieldNodes = (NodeList) xpath.evaluate("List/Fields/Field", document, XPathConstants.NODESET);
-
-            NodeList fieldNodes = document.getElementsByTagName("Field");
+*/
+            NodeList fieldNodes = document.getElementsByTagName("z:row");
 
 
             for (int i = 0; i < fieldNodes.getLength(); ++i) {
                 Node element = fieldNodes.item(i);
-                if (checkAttr(element, "Hidden", false, true) && attrExist(element, "ColName")) {
+
+                NamedNodeMap attrMap = element.getAttributes();
+
+                for (int j=0; j < attrMap.getLength(); ++j) {
+                    Node item = attrMap.item(i);
+                    item.getNodeName()
+                }
+
+                /*if (checkAttr(element, "Hidden", false, true) && attrExist(element, "ColName")) {
                     //listsList.add(element.getAttributes().getNamedItem("DisplayName").getNodeValue());
                     System.out.println(
                             attrValue(element, "ColName") + " " +
                             attrValue(element, "DisplayName"));
-                }
+                }*/
 
             }
-*/
+
 
             System.out.println("SharePoint Online Lists Web Service Response:" + TestClass.xmlToString(document));
         }
