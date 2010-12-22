@@ -9,7 +9,9 @@ import com.sun.org.apache.xerces.internal.dom.ElementImpl;
 import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 import java.io.FileInputStream;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,6 +37,7 @@ import org.w3c.dom.NodeList;
 import wewastetimewithsharepoint.wsdl.GetListCollectionResponse.GetListCollectionResult;
 import wewastetimewithsharepoint.wsdl.GetListItemsResponse.GetListItemsResult;
 import wewastetimewithsharepoint.wsdl.GetListResponse.GetListResult;
+import wewastetimewithsharepoint.wsdl.UpdateListItemsResponse.UpdateListItemsResult;
 
 /**
  *
@@ -60,30 +63,43 @@ public class TestClass {
        
         //GetListResult r = con.getAStrangeSoapPort().getList("FooBar");
 
-        wewastetimewithsharepoint.wsdl.GetListItems.ViewFields vf =new wewastetimewithsharepoint.wsdl.GetListItems.ViewFields();
+        wewastetimewithsharepoint.wsdl.UpdateListItems.Updates vf =new wewastetimewithsharepoint.wsdl.UpdateListItems.Updates();
 
         
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance ();
 	DocumentBuilder db = dbf.newDocumentBuilder ();
 	Document doc = db.newDocument ();
 
-        Element root = doc.createElement("ViewFields");
-        doc.appendChild(root);
-        
-        LinkedList<String> fields = new LinkedList<String>();
-        fields.add("ID");
-        fields.add("Title");
-        
-        for (String field : fields) {
-            Element fieldElement = doc.createElement("FieldRef");
-            Attr fieldAttrib = doc.createAttribute("Name");
-            fieldAttrib.setNodeValue(field);
-            root.appendChild(fieldElement);
-        }
+        Element root = doc.createElement("Batch");
 
+        root.setAttribute("OnError", "Continue");
+        root.setAttribute("ListVersion", "1");
+        root.setAttribute("ViewName", "");
+
+        doc.appendChild(root);
+
+
+
+
+        Element methodElement = doc.createElement("Method");
+        methodElement.setAttribute("ID", "1");
+        methodElement.setAttribute("Cmd", "New");
+        root.appendChild(methodElement);
+
+        Element fieldElement = doc.createElement("Field");
+        fieldElement.setAttribute("Name", "ID");
+        fieldElement.setNodeValue("New");
+        methodElement.appendChild(fieldElement);
+
+        fieldElement = doc.createElement("Field");
+        fieldElement.setAttribute("Name", "Title");
+        fieldElement.setNodeValue("Testblubb");
+        methodElement.appendChild(fieldElement);
+        
         vf.getContent().add(doc.getDocumentElement());
 
-        GetListItemsResult r = con.getAStrangeSoapPort().getListItems("FooBar", "", null, vf, "", null, null);
+        UpdateListItemsResult r = con.getAStrangeSoapPort().updateListItems("ggg", vf);
+        //GetListItemsResult r = con.getAStrangeSoapPort().getListItems("FooBar", "", null, vf, "", null, null);
         //GetListCollectionResult r = con.getAStrangeSoapPort().getListCollection();
         Object listResult = r.getContent().get(0);
 
@@ -97,7 +113,7 @@ public class TestClass {
             XPath xpath = xpathFactory.newXPath();
             NodeList fieldNodes = (NodeList) xpath.evaluate("List/Fields/Field", document, XPathConstants.NODESET);
 */
-            NodeList fieldNodes = document.getElementsByTagName("z:row");
+            /*NodeList fieldNodes = document.getElementsByTagName("z:row");
 
 
             for (int i = 0; i < fieldNodes.getLength(); ++i) {
@@ -115,9 +131,9 @@ public class TestClass {
                     System.out.println(
                             attrValue(element, "ColName") + " " +
                             attrValue(element, "DisplayName"));
-                }*/
+                }
 
-            }
+            }*/
 
 
             System.out.println("SharePoint Online Lists Web Service Response:" + TestClass.xmlToString(document));
@@ -128,6 +144,16 @@ public class TestClass {
 
 
 
+
+    public static void addAttrib(Document doc, Element node, String key, String value) {
+        node.setAttribute(key, value);
+    }
+
+    public static void addAttribs(Document doc, Element node, Map<String, String> toAdd) {
+        for (String key : toAdd.keySet()) {
+            addAttrib(doc, node, key, toAdd.get(key));
+        }
+    }
 
 
 
