@@ -78,9 +78,6 @@ public class TestClass {
 
         doc.appendChild(root);
 
-
-
-
         Element methodElement = doc.createElement("Method");
         methodElement.setAttribute("ID", "1");
         methodElement.setAttribute("Cmd", "New");
@@ -91,11 +88,11 @@ public class TestClass {
         fieldElement.setNodeValue("New");
         methodElement.appendChild(fieldElement);
 
-        fieldElement = doc.createElement("Field");
+       /* fieldElement = doc.createElement("Field");
         fieldElement.setAttribute("Name", "Title");
-        fieldElement.setNodeValue("Testblubb");
+        fieldElement.appendChild(doc.createTextNode("Testblubb"));
         methodElement.appendChild(fieldElement);
-        
+       */
         vf.getContent().add(doc.getDocumentElement());
 
         UpdateListItemsResult r = con.getAStrangeSoapPort().updateListItems("ggg", vf);
@@ -135,6 +132,7 @@ public class TestClass {
 
             }*/
 
+            System.out.println("SharePoint Online Lists Web Service Request:" + TestClass.xmlToString(doc));
 
             System.out.println("SharePoint Online Lists Web Service Response:" + TestClass.xmlToString(document));
         }
@@ -144,16 +142,6 @@ public class TestClass {
 
 
 
-
-    public static void addAttrib(Document doc, Element node, String key, String value) {
-        node.setAttribute(key, value);
-    }
-
-    public static void addAttribs(Document doc, Element node, Map<String, String> toAdd) {
-        for (String key : toAdd.keySet()) {
-            addAttrib(doc, node, key, toAdd.get(key));
-        }
-    }
 
 
 

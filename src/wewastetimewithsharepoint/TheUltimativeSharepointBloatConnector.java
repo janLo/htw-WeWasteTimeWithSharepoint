@@ -5,12 +5,19 @@
 package wewastetimewithsharepoint;
 
 import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
+import java.lang.Integer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.ws.BindingProvider;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -19,6 +26,7 @@ import wewastetimewithsharepoint.wsdl.GetListItemsResponse.GetListItemsResult;
 import wewastetimewithsharepoint.wsdl.GetListResponse.GetListResult;
 import wewastetimewithsharepoint.wsdl.Lists;
 import wewastetimewithsharepoint.wsdl.ListsSoap;
+import wewastetimewithsharepoint.wsdl.UpdateListItemsResponse.UpdateListItemsResult;
 
 /**
  * Its a SINGLETON!!
@@ -116,11 +124,9 @@ public class TheUltimativeSharepointBloatConnector {
         return -1;
     }
 
-    private List<SPSoapListItem> getListItems(String listName, List<String> headings) {
-        GetListItemsResult r = getAStrangeSoapPort().getListItems(listName, "", null, null, "", null, null);
+    private void getListItems(SPSoapList list) {
+        GetListItemsResult r = getAStrangeSoapPort().getListItems(list.getName(), "", null, null, "", null, null);
         Object listResult = r.getContent().get(0);
-
-        List<SPSoapListItem> items = new LinkedList<SPSoapListItem>();
 
         if ((listResult != null) && (listResult instanceof ElementNSImpl)) {
             ElementNSImpl node = (ElementNSImpl) listResult;
@@ -129,22 +135,70 @@ public class TheUltimativeSharepointBloatConnector {
 
             for (int i = 0; i < fieldNodes.getLength(); ++i) {
                 Node element = fieldNodes.item(i);
-                NamedNodeMap attrMap = element.getAttributes();
-
-                SPSoapListItem listItem = new SPSoapListItem(this, headings);
-
-                for (int j = 0; j < attrMap.getLength(); ++j) {
-                    Node item = attrMap.item(j);
-                    listItem.setAttribute(item.getNodeName().replaceFirst("ows_", ""),
-                            item.getNodeValue());
-                }
-
-                items.add(listItem);
+                decomposeListItemEntry(element, list.createItem());
             }
         }
-
-        return items;
     }
+
+    private SPSoapListItem decomposeListItemEntry(Node element, SPSoapListItem listItem) {
+        NamedNodeMap attrMap = element.getAttributes();
+
+        for (int j = 0; j < attrMap.getLength(); ++j) {
+            Node item = attrMap.item(j);
+            listItem.setExistingAttribute(item.getNodeName().replaceFirst("ows_", ""),
+                    item.getNodeValue());
+        }
+        return listItem;
+    }
+
+    private Element createBatch() throws ParserConfigurationException{
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance ();
+	DocumentBuilder db = dbf.newDocumentBuilder ();
+	Document doc = db.newDocument ();
+
+        Element root = doc.createElement("Batch");
+        root.setAttribute("OnError", "Continue");
+        root.setAttribute("ListVersion", "1");
+        root.setAttribute("ViewName", "");
+
+        doc.appendChild(root);
+
+        return root;
+    }
+
+    private Element createListUpdateInsertOrDeleteMethod(Element batch, String type, int cnt) {
+        Element methodElement = batch.getOwnerDocument().createElement("Method");
+        methodElement.setAttribute("ID", Integer.toString(cnt));
+        methodElement.setAttribute("Cmd", type);
+        batch.appendChild(methodElement);
+        return methodElement;
+    }
+
+    private Element createListUpdateInsertOrDeleteMethodField(Element method, String name, String value) {
+        Document doc = method.getOwnerDocument();
+        Element fieldElement = doc.createElement("Field");
+        fieldElement.setAttribute("Name", name);
+        fieldElement.appendChild(doc.createTextNode(value));
+        method.appendChild(fieldElement);
+
+        return fieldElement;
+    }
+    
+    private void doTheCrudeListUpdateOnTheSharepointWebserviceAndHopeItSucceeded(SPSoapListItem itemToUpdate) {
+        try {
+            wewastetimewithsharepoint.wsdl.UpdateListItems.Updates vf = new wewastetimewithsharepoint.wsdl.UpdateListItems.Updates();
+            vf.getContent().add(itemToUpdate.getAXMLUpdateBatch());
+            UpdateListItemsResult r = getAStrangeSoapPort().updateListItems(itemToUpdate.getListName(), vf);
+
+            Object listResult = r.getContent().get(0);
+
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(TheUltimativeSharepointBloatConnector.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+
 
     // TODO: Make this private after testing
     public ListsSoap getAStrangeSoapPort() {
@@ -164,7 +218,8 @@ public class TheUltimativeSharepointBloatConnector {
         private final TheUltimativeSharepointBloatConnector connector;
         private final String listName;
         private List<String> headings;
-        private List<SPSoapListItem> items;
+        private List<SPSoapListItem> items = new LinkedList<SPSoapListItem>();
+        private List<SPSoapListItem> deleted = new LinkedList<SPSoapListItem>();
 
         public SPSoapList(TheUltimativeSharepointBloatConnector connector, String listName) {
             this.connector = connector;
@@ -175,7 +230,7 @@ public class TheUltimativeSharepointBloatConnector {
 
         private void loadList() {
             headings = connector.getListHeadings(listName);
-            this.items = connector.getListItems(listName, headings);
+            connector.getListItems(this);
         }
 
         public List<String> getColumnHeadings() {
@@ -200,6 +255,38 @@ public class TheUltimativeSharepointBloatConnector {
 
         public String getHeading(int idx) {
             return headings.get(idx);
+        }
+
+        public String getName() {
+            return listName;
+        }
+
+        public SPSoapListItem createItem() {
+             SPSoapListItem newItem = new SPSoapListItem(connector, headings, listName);
+             items.add(newItem);
+             return newItem;
+        }
+
+        public void deleteItem(int idx) {
+            deleted.add(items.get(idx));
+            items.get(idx).motivateToSuicide();
+            items.remove(idx);
+        }
+
+        public List<Integer> flush() {
+            for (SPSoapListItem item : deleted) {
+                item.flush();
+            }
+            deleted.clear();
+
+            List<Integer> modRows = new LinkedList<Integer>();
+            for (SPSoapListItem item : items) {
+                if (item.isDirty()) {
+                    modRows.add(items.indexOf(item));
+                    item.flush();
+                }
+            }
+            return modRows;
         }
     }
 
@@ -230,14 +317,26 @@ public class TheUltimativeSharepointBloatConnector {
         private final TheUltimativeSharepointBloatConnector connector;
         private final List<String> headings;
         private final HashMap<String, String> attributes;
+        private final List<String> modified = new LinkedList<String>();
+        private boolean isNew = true;
+        private boolean delete = false;
+        private final String listName;
+        
 
-        public SPSoapListItem(TheUltimativeSharepointBloatConnector connector, List<String> headings) {
+        public SPSoapListItem(TheUltimativeSharepointBloatConnector connector, List<String> headings, String listName) {
             this.connector = connector;
             this.headings = headings;
             this.attributes = new HashMap<String, String>(headings.size() + 14);
+            this.attributes.put("ID", "New");
+            this.listName = listName;
         }
 
-        protected void setAttribute(String key, String value) {
+        public String getListName() {
+            return listName;
+        }
+
+        private void setExistingAttribute(String key, String value) {
+            this.isNew = false;
             attributes.put(key, value);
         }
 
@@ -247,12 +346,66 @@ public class TheUltimativeSharepointBloatConnector {
         }
 
         public String getFieldValue(String columnName) {
-            return attributes.get(columnName);
+            String value = attributes.get(columnName);
+            if (null == value) {
+                return "(empty)";
+            }
+            return value;
         }
         
         public int getId() {
+            if (attributes.get("ID").equals("New")) {
+                return -1;
+            }
             return Integer.parseInt(attributes.get("ID"));
         }
+
+        private void motivateToSuicide() {
+            this.delete = true;
+        }
+
+        public void modifyField(int column, String newValue) {
+            String columnName = headings.get(column);
+            modifyField(columnName, newValue);
+        }
+
+        public void modifyField(String column, String newValue) {
+            modified.add(column);
+            attributes.put(column, newValue);
+        }
+
+        public boolean isDirty() {
+            return isNew || delete || (! modified.isEmpty());
+        }
+
+        public void flush() {
+            if (isDirty()) {
+                doTheCrudeListUpdateOnTheSharepointWebserviceAndHopeItSucceeded(this);
+                modified.clear();
+                if (isNew) {
+                    isNew = false;
+                }
+            }
+        }
+        
+        private Element getAXMLUpdateBatch() throws ParserConfigurationException {
+            String command = "Update";
+            if (isNew) {
+                command = "New";
+            } else {
+                if (delete) {
+                    command = "Delete";
+                }
+            }
+            Element updateBatch = connector.createBatch();
+            Element updateMethod = connector.createListUpdateInsertOrDeleteMethod(updateBatch, command, 1);
+            connector.createListUpdateInsertOrDeleteMethodField(updateMethod, "ID", attributes.get("ID"));
+            for (String col : modified) {
+                connector.createListUpdateInsertOrDeleteMethodField(updateMethod, col, attributes.get(col));
+            }
+            return updateBatch;
+        }
+
     }
 
     private static boolean checkAttr(Node node, String name, boolean expected, boolean dflt) {

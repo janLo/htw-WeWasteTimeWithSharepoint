@@ -5,6 +5,7 @@
 
 package wewastetimewithsharepoint;
 
+import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -36,4 +37,34 @@ public class SharePointListModel extends AbstractTableModel {
         return list.getRowItem(rowIndex).getFieldValue(columnIndex);
     }
 
+    @Override
+    public boolean isCellEditable(int row, int col) {
+        return true;
+    }
+
+    @Override
+    public void setValueAt(Object value, int row, int col) {
+        if (!getValueAt(row, col).equals(value)) {
+            list.getRowItem(row).modifyField(col, (String)value);
+            fireTableCellUpdated(row, col);
+        }
+    }
+
+    public void addRow() {
+        list.createItem();
+        fireTableRowsInserted(list.getRowCount() - 1, list.getRowCount() - 1);
+    }
+
+    public void dropRow(int row) {
+        list.deleteItem(row);
+        fireTableRowsDeleted(row, row);
+    }
+
+    public void syncWithTheRestOfTheWorld(){
+        List<Integer> possiblyChanged_WhoKnows = list.flush();
+
+        for (int i : possiblyChanged_WhoKnows) {
+            fireTableRowsUpdated(i, i);
+        }
+    }
 }

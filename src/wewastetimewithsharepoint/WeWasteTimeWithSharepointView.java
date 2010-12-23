@@ -4,6 +4,8 @@
 
 package wewastetimewithsharepoint;
 
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableModelEvent;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
 import org.jdesktop.application.SingleFrameApplication;
@@ -12,13 +14,15 @@ import org.jdesktop.application.TaskMonitor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.Vector;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Timer;
 import javax.swing.Icon;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 
 /**
  * The application's main frame.
@@ -90,6 +94,17 @@ public class WeWasteTimeWithSharepointView extends FrameView {
 
         exposeableLists = TheUltimativeSharepointBloatConnector.instance().getSomeLists();
         listSelector.setModel(new DefaultComboBoxModel(exposeableLists.toArray()));
+
+        listTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+            public void valueChanged(ListSelectionEvent e) {
+                if (listTable.getSelectedRowCount() > 0) {
+                    deleteButton.setEnabled(true);
+                }
+            }
+        });
+        listTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        super.getFrame().setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
     @Action
@@ -119,6 +134,10 @@ public class WeWasteTimeWithSharepointView extends FrameView {
         listTable = new javax.swing.JTable();
         loadButton = new javax.swing.JButton();
         loadedLabel = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
+        addButton = new javax.swing.JButton();
+        deleteButton = new javax.swing.JButton();
+        commitButton = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem exitMenuItem = new javax.swing.JMenuItem();
@@ -193,6 +212,44 @@ public class WeWasteTimeWithSharepointView extends FrameView {
         gridBagConstraints.insets = new java.awt.Insets(3, 3, 5, 3);
         mainPanel.add(loadedLabel, gridBagConstraints);
 
+        jPanel1.setName("jPanel1"); // NOI18N
+
+        addButton.setText(resourceMap.getString("addButton.text")); // NOI18N
+        addButton.setEnabled(false);
+        addButton.setName("addButton"); // NOI18N
+        addButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addButtonActionPerformed(evt);
+            }
+        });
+        jPanel1.add(addButton);
+
+        deleteButton.setText(resourceMap.getString("deleteButton.text")); // NOI18N
+        deleteButton.setEnabled(false);
+        deleteButton.setName("deleteButton"); // NOI18N
+        deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteButtonActionPerformed(evt);
+            }
+        });
+        jPanel1.add(deleteButton);
+
+        commitButton.setText(resourceMap.getString("commitButton.text")); // NOI18N
+        commitButton.setEnabled(false);
+        commitButton.setName("commitButton"); // NOI18N
+        commitButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                commitButtonActionPerformed(evt);
+            }
+        });
+        jPanel1.add(commitButton);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 4;
+        mainPanel.add(jPanel1, gridBagConstraints);
+
         menuBar.setName("menuBar"); // NOI18N
 
         fileMenu.setText(resourceMap.getString("fileMenu.text")); // NOI18N
@@ -262,15 +319,61 @@ public class WeWasteTimeWithSharepointView extends FrameView {
         SharePointListModel lm = new SharePointListModel(list);
 
         listTable.setModel(lm);
+
+        lm.addTableModelListener(new TableModelListener() {
+
+            public void tableChanged(TableModelEvent e) {
+                commitButton.setEnabled(true);
+            }
+        });
+
         loadedLabel.setText(listName + " loaded ...");
 
         exposeableLists = TheUltimativeSharepointBloatConnector.instance().getSomeLists();
         listSelector.setModel(new DefaultComboBoxModel(exposeableLists.toArray()));
         listSelector.setSelectedItem(listName);
+
+        addButton.setEnabled(true);
+        deleteButton.setEnabled(false);
+        //commitButton.setEnabled(true);
     }//GEN-LAST:event_loadButtonActionPerformed
 
+    private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
+        TableModel model = listTable.getModel();
+        if (null != model && model instanceof SharePointListModel) {
+            SharePointListModel spModel = (SharePointListModel)model;
+            spModel.addRow();
+            commitButton.setEnabled(true);
+        }
+    }//GEN-LAST:event_addButtonActionPerformed
+
+    private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
+
+        int row = listTable.getSelectedRow();
+        TableModel model = listTable.getModel();
+        if (null != model && model instanceof SharePointListModel && listTable.getSelectedRowCount() > 0) {
+            SharePointListModel spModel = (SharePointListModel)model;
+            spModel.dropRow(row);
+            commitButton.setEnabled(true);
+            deleteButton.setEnabled(false);
+        }
+    }//GEN-LAST:event_deleteButtonActionPerformed
+
+    private void commitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_commitButtonActionPerformed
+        TableModel model = listTable.getModel();
+        if (null != model && model instanceof SharePointListModel) {
+            SharePointListModel spModel = (SharePointListModel)model;
+            spModel.syncWithTheRestOfTheWorld();
+            commitButton.setEnabled(false);
+        }
+    }//GEN-LAST:event_commitButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton addButton;
+    private javax.swing.JButton commitButton;
+    private javax.swing.JButton deleteButton;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JComboBox listSelector;
     private javax.swing.JTable listTable;

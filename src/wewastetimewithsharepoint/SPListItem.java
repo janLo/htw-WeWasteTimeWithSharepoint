@@ -12,4 +12,6 @@ package wewastetimewithsharepoint;
 public interface SPListItem {
     public String getFieldValue(int idx);
     public String getFieldValue(String columnName);
+    public void modifyField(String column, String newValue);
+    public void modifyField(int column, String newValue);
 }

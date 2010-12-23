@@ -18,4 +18,10 @@ public interface SPList {
     public int getRowCount();
     public SPListItem getRowItem(int idx);
     public SPListItem insertNewItem(int pos);
+    public String getName();
+
+    public SPListItem createItem();
+    public void deleteItem(int idx);
+
+    public List<Integer> flush();
 }
