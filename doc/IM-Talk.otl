@@ -1,0 +1,147 @@
+Problembeschreibung
+	: Aufgabe: Für die Integration der Sharepoint Plattform in bestehende 
+	: Anwendungen spielt das Thema Anwendungs-integration eine tragende 
+	: Rolle. Der CIO wünscht sich daher eine Untersuchung der Webservice 
+	: Funktionen. 
+	:
+	: Exemplarisch soll hierfür eine Sharepoint-Liste via 
+	: Webservices aus einer Java- und einer .NET-Anwendung heraus 
+	: verwaltet (mind. Elemente anlegen, anzeigen, löschen) werden.
+Herangehensweise
+	Technologie Discover
+		: Es muss erst untersucht werden welche technologien müssen und gehen
+		: um die Aufgabe zu lösen.
+	Beispielsuche
+		: Das einfachste ist mit funktionierenden Beispielen zu staretn um ein
+		: Gefühl für die anstehenden Aufgaben sowie den Aufwand zu bekommen.
+	Suchen von Dokumentation
+		: Es ist möglichst eindeutige Dokumentation möglichst vom Hersteler zu
+		: suchen.
+	Test in popeltestklasse
+		: Es wurde eine art Testklasse angelegt, welche ausführbar war, in der
+		: die komplette Kommunikation mit dem Service vorher gestestet und
+		: reverse engineert wurde.
+Technologien
+	SOAP
+		: XML Basierter RPC Mechnismus
+		WSDL
+			: Web Services Description Language - Details lassen sich in der
+			: Wikipedia nachlesen. Beschreibt die Schnittstelle, Lässt sich
+			: mit AXIX benutzen um automatische bindings zu generieren.
+	XML
+		: Die Basistechnologie auf der SOAP aufbaut
+	JAVA
+		AXIS
+			: Generiert Java-Bindings aus dem Service-WSDL. Dies funktioniert
+			: zwar nur für request- und response-calls, die Typen und Werte
+			: die der Service liefert, bzw. welche man als Argumente übergeben
+			: muss kann sich der Entwickler selber aus dem geliefertem XML
+			: lutschen, bzw. eigenes XML zusammenfrickeln.
+		DOM
+			: Das Java Dom Geraffel wird benutzt um XML-Fragmente zu erzeugen,
+			: welche in die Request objekte injected werden.
+			:
+			: Zudem wird der DOM Parser benötigt um die zurückgelieferten
+			: Fragmente zu verarbeiten und die relevanten Informationen
+			: herauszupopeln.
+Durchführung
+	Interpretetion der Aufgabe auftellen
+		Was sind Elemente?
+			: In der Aufgabenstellung wird von Elementen gesprohen, welche
+			: bearbeitet werden sollen. Wir definieren Elemente als
+			: Listeneinträge
+		Wie weit sollen Listen frei wählbar sein?
+			: Man muss natürlich eine Liste auswählen die man bearbeiten will.
+			:
+			: Es wurde festgelegt das ein Subset der verfügbaren Listen
+			: einfach zur Auswahl gestellt werden und der Nuter selektieren
+			: kann. Das Auswahlkriterium wurde dabei mehr oder minder beliebig
+			: darauf festgelegt, das der Author nicht die ID 1 haben darf.
+			:
+			: In wie weit das sinvoll ist kann und will ich nicht beurteilen.
+	Autom. generieren von Bindings
+		: Verwendung von Apache axis, durch die Netbeans IDE
+	Immer wieder testen und entsprechend reverse engineeren
+		: Anfragen wurden zuerst in einer Testklasse gestestet und
+		: anschließend die Antworten manuell analysiert und Annahmen getroffen
+		: wo was stehen könnte. Dies wurde entsprechend oft wiederholt bis man
+		: sich halbwegs sicher sein konnte das das angenommene Format der
+		: Antwort keinen allzugroßen Offset zur Realität hat.
+	Eine „Architektur“ erdenken
+		: Es gibt einen Connector, der die Kommunikation mit dem Servce
+		: übernimmt, Interfaces für Listen und Listenelemente und einen
+		: Adapter der aus einer Liste ein TableModel zur Verfügung stellt.
+		:
+		: Der Connector fungiert als eine Art Factory für Listen, indem er die
+		: vom Service gelieferten Daten in einer Implemetierung der Interfaces
+		: verpakt.
+		:
+		: Dann gibt es noch das ganze GUI Geraffel und die automatisch
+		: generierten Bindings.
+	ca 30-40h Debugging und Codescreiben
+		: Das Schreiben des Codes ging relativ Straight-Forward. Es wurde
+		: lediglich durch die ständigen Probierereien gestört, welche die
+		: mangelhafte Doku ersetzen mussten.
+	Basis Akzeptanztests (manuell)
+		: Implementierte Funktionalität wurde im nachhinein einem groben
+		: Akzeptanztest unterzogen indem hinreichend oft geklickt wurde und
+		: bei einem Ausbleiben von Fehlern das ganze für gut befunden wurde.
+Probleme (Implementierung)
+	Authentifizierung
+		: Sharepoint benutzt NTLM Auth - Java kann das nicht. Lösung:
+		: Sharepoint auf das BASIC Verfahren umstellen. Belannte
+		: Seiteneffekte: …?
+	Binding
+		: Bindings werden aus dem WSDL generiert -> Allerdings nur für die
+		: Schnittstelle. Content muss „per Hand“ mit gänigen
+		: XML-Parsern/Generatoren zerpflückt bzw. erzeugt werden.
+	Spärliche Dokumentation
+		: benutzte XML Notationen oft demantisch nicht erklärt -> Reverse
+		: engineering.
+		: Nichtssagende Fehlermeldungen („Unauthorized“, „Eine Ausnahme vom
+		: Typ "Microsoft.SharePoint.SoapServer.SoapServerException" wurde
+		: ausgelöst.“
+Known Issues (Resultat)
+	Infrastruktur
+		: Da es sich um proprietäre Technologie handelt deren
+		: Sicherheitsrisiko nicht überschaubar ist und die zudem noch von
+		: einer Firma kommt, welche für eklatante Sicherheitsmängel bekannt
+		: ist und gar noch auf einem Betriebsystem der gleichen Firma in einem
+		: der unsichersten Webserver laufen muss, entschied wohl der
+		: zuständige Administrator den Dienst nicht nach ausse verfübbar zu
+		: machen.
+		:
+		: Man erreicht ihn somit nur duch das VPN zur Hochschule, welches
+		: aufgrund der Einschränkungen der verwendeten Proprietären
+		: technologien und der Ignoranz sowie Inkompetenz der betreuenden
+		: Administratoren aller 180 Minuten getrennt wird.
+		:
+		: Leider ist eine dauerhafte Verbindung während der Entwicklung
+		: aufgrund der mangelhaften Dokumentation notwendig.
+	BASIC Auth
+		: The only prooved
+	Hardcoded URL
+		: Domain und Urlanteil sind momentan hart im code festgelegt.
+	Typunsicher
+		: Aller Inhalt wird atm als TEXT behandelt. Es gibt keine
+		: Unterscheidung zwischen Datentypen. Dies aus dem Listen-AML zu lesen
+		: scheint aufwendig und ist UNDOKUMENTIERT!
+	! ACID
+		: Nicht transaktionssicher, Elemente werden nicht gesperrt.
+Lessons learned
+	Proprietäre Systeme sind gefährlich
+		: Man ist bei den Schnittstellen zu 100% auf die mitgelieferte
+		: Dokumentation oder existierende Beispiele angewiesen. Dinge die in
+		: der Dokumentation nicht hinreichend behandelt werden müssen mittels
+		: Ausprobieren erforscht werden, was jedoch duch mangelnde Kenntniss
+		: von CornerCases zu zerbrechlicher Software führt.
+		:
+		: Ein Blick auf interne Details ist schlichtweg nicht möglich. Meine
+		: Erfahrungen zeigen jedoch das dies eine nicht zu ersezende Hilfe
+		: ist.
+		:
+		: Schnittstellen != offene Schnittstellen
+	Zeitschätzungen für solche Aufgaben sind nicht möglich.
+		: Es kann alles an Problemen auftreten, manche sind in 3 Minuten
+		: gelöst, bei anderen stellt man nach 5h fest das man wohl einen
+		: anderen Ansatz wählen muss.
